@@ -18,7 +18,7 @@ $ pip install -r requirements.txt
 ## Avviare l’API
 Dalla root del  progetto
 ```bash
-$ python fastapi dev ./src/url_shortener/asgi.py --reload
+$ fastapi dev ./src/url_shortener/asgi.py --reload
 ```
 
 ---
