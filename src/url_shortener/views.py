@@ -1,10 +1,11 @@
-from typing import Union
+from typing import Annotated, Union
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+
+from url_shortener.repository.base import AliasRepository
+from url_shortener.repository.memory import InMemory
 
 app = FastAPI()
-
-urls_mapping = {}
 
 
 @app.get("/")
@@ -17,14 +18,15 @@ def health_check():
     return {"status": "ok", "database": "ok", "cache": "ok"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
-
 @app.post("/short-urls")
-def create_short(long_url: str, alias: str):
-    urls_mapping["alias"] = long_url
+def create_short(
+    repo: Annotated[AliasRepository, Depends(InMemory)],
+    long_url: str,
+    alias: Union[str, None] = None,
+):
+    # TODO: alias adesso è opzionale, se non c'è dovete creare una stringa random di almeno 5 caratteri ed usarla come alias.
+    # alias = ??
+    repo.add(alias=alias, long_url=long_url)
 
     return {
         "long_url": f"{long_url}",
@@ -34,8 +36,11 @@ def create_short(long_url: str, alias: str):
 
 
 @app.get("/short-urls/{alias}")
-def get_short(alias: str):
-    long_url = urls_mapping.get("alias", None)
+def get_short(
+    repo: Annotated[AliasRepository, Depends(InMemory)],
+    alias: str,
+):
+    long_url = repo.get_by_alias(alias=alias)
 
     return {
         "long_url": f"{long_url}",
